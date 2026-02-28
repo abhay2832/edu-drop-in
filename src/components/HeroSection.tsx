@@ -38,15 +38,15 @@ const HeroSection = ({ currentEmail, onGenerate }: HeroSectionProps) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+          transition={{ duration: 0.6 }}>
+
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
             <Sparkles className="h-3 w-3" />
             Free &amp; Anonymous — No Registration Required
           </div>
 
-          <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-            Best EDU Temp Email
+          <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight md:text-6xl">Best Temp Email
+Generator indias no one
             <br />
             <span className="text-primary glow-text">Generator</span>
           </h1>
@@ -60,8 +60,8 @@ const HeroSection = ({ currentEmail, onGenerate }: HeroSectionProps) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mx-auto max-w-xl"
-        >
+          className="mx-auto max-w-xl">
+
           {/* Email display */}
           <div className="gradient-border mb-4 flex items-center gap-2 rounded-xl bg-card p-2">
             <div className="flex-1 rounded-lg bg-secondary px-4 py-3 font-mono text-sm text-foreground md:text-base select-all">
@@ -71,50 +71,50 @@ const HeroSection = ({ currentEmail, onGenerate }: HeroSectionProps) => {
               onClick={handleCopy}
               size="icon"
               variant="ghost"
-              className="h-10 w-10 shrink-0 text-muted-foreground hover:text-primary"
-            >
+              className="h-10 w-10 shrink-0 text-muted-foreground hover:text-primary">
+
               {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
             </Button>
             <Button
               onClick={() => onGenerate()}
               size="icon"
-              className="h-10 w-10 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
+              className="h-10 w-10 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90">
+
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Custom prefix toggle */}
-          {!showCustom ? (
-            <button
-              onClick={() => setShowCustom(true)}
-              className="text-xs text-muted-foreground hover:text-primary transition-colors"
-            >
+          {!showCustom ?
+          <button
+            onClick={() => setShowCustom(true)}
+            className="text-xs text-muted-foreground hover:text-primary transition-colors">
+
               Want a custom email name? Click here
-            </button>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="flex gap-2"
-            >
+            </button> :
+
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="flex gap-2">
+
               <Input
-                value={customPrefix}
-                onChange={(e) => setCustomPrefix(e.target.value)}
-                placeholder="Enter custom prefix..."
-                className="bg-card font-mono text-sm"
-                onKeyDown={(e) => e.key === "Enter" && handleCustomGenerate()}
-                maxLength={30}
-              />
+              value={customPrefix}
+              onChange={(e) => setCustomPrefix(e.target.value)}
+              placeholder="Enter custom prefix..."
+              className="bg-card font-mono text-sm"
+              onKeyDown={(e) => e.key === "Enter" && handleCustomGenerate()}
+              maxLength={30} />
+
               <Button onClick={handleCustomGenerate} className="bg-primary text-primary-foreground hover:bg-primary/90">
                 Generate
               </Button>
             </motion.div>
-          )}
+          }
         </motion.div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default HeroSection;

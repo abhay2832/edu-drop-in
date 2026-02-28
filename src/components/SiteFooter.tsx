@@ -1,7 +1,7 @@
 import { Mail, Github, Twitter } from "lucide-react";
 
-const SiteFooter = () => (
-  <footer className="border-t border-border/50 bg-card/50">
+const SiteFooter = () =>
+<footer className="border-t border-border/50 bg-card/50">
     <div className="container mx-auto px-4 py-12">
       <div className="grid gap-8 md:grid-cols-4">
         <div className="md:col-span-2">
@@ -9,7 +9,7 @@ const SiteFooter = () => (
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
               <Mail className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-lg font-bold">Temp<span className="text-primary">Mail</span></span>
+            <span className="text-lg font-bold">AryanMail<span className="text-primary">Mail</span></span>
           </div>
           <p className="max-w-sm text-sm text-muted-foreground">
             Free temporary email service. Protect your privacy, avoid spam, and stay anonymous online.
@@ -39,7 +39,7 @@ const SiteFooter = () => (
         © {new Date().getFullYear()} TempMail. All rights reserved. No data is stored permanently.
       </div>
     </div>
-  </footer>
-);
+  </footer>;
+
 
 export default SiteFooter;
