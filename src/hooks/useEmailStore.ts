@@ -1,5 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useCallback } from "react";
 
 interface Email {
   id: string;
@@ -15,142 +14,89 @@ interface Email {
 
 const DOMAINS = ["tempbox.io", "edu-mail.net", "quickmail.dev"];
 
+const MOCK_EMAILS: Email[] = [
+  {
+    id: "1",
+    from: "noreply@github.com",
+    fromName: "GitHub",
+    subject: "Your verification code",
+    snippet: "Your GitHub verification code is 847293. This code expires in 10 minutes...",
+    body: `<div style="font-family: sans-serif; padding: 20px;">
+      <h2>Your GitHub verification code</h2>
+      <p>Hi there,</p>
+      <p>Your GitHub verification code is: <strong style="font-size: 24px;">847293</strong></p>
+      <p>This code expires in 10 minutes. If you didn't request this code, please ignore this email.</p>
+      <p>— The GitHub Team</p>
+    </div>`,
+    date: new Date(Date.now() - 120000),
+    read: false,
+    hasAttachment: false,
+  },
+  {
+    id: "2",
+    from: "welcome@spotify.com",
+    fromName: "Spotify",
+    subject: "Welcome to Spotify! Confirm your email",
+    snippet: "Thanks for signing up! Please confirm your email address to get started with Spotify...",
+    body: `<div style="font-family: sans-serif; padding: 20px;">
+      <h2>Welcome to Spotify!</h2>
+      <p>Thanks for signing up. Please confirm your email address by clicking the button below.</p>
+      <p><a href="#" style="background: #1DB954; color: white; padding: 12px 24px; border-radius: 20px; text-decoration: none;">Confirm Email</a></p>
+      <p>If you didn't create a Spotify account, you can ignore this email.</p>
+    </div>`,
+    date: new Date(Date.now() - 300000),
+    read: true,
+    hasAttachment: false,
+  },
+  {
+    id: "3",
+    from: "no-reply@accounts.google.com",
+    fromName: "Google",
+    subject: "Security alert: New sign-in detected",
+    snippet: "A new sign-in was detected on your account. If this was you, you can ignore this message...",
+    body: `<div style="font-family: sans-serif; padding: 20px;">
+      <h2>Security Alert</h2>
+      <p>A new sign-in was detected on your Google Account.</p>
+      <p><strong>Device:</strong> Chrome on Windows<br/><strong>Location:</strong> New York, USA<br/><strong>Time:</strong> Just now</p>
+      <p>If this was you, you can ignore this message. If not, please secure your account.</p>
+    </div>`,
+    date: new Date(Date.now() - 600000),
+    read: true,
+    hasAttachment: true,
+  },
+];
+
 function generateRandomString(length: number): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-function mapDbEmail(row: any): Email {
-  return {
-    id: row.id,
-    from: row.from_address,
-    fromName: row.from_name || row.from_address.split("@")[0],
-    subject: row.subject || "(no subject)",
-    snippet: (row.body || "").replace(/<[^>]*>/g, "").slice(0, 80) + "...",
-    body: row.body || "",
-    date: new Date(row.received_at),
-    read: row.is_read,
-    hasAttachment: row.has_attachment,
-  };
-}
-
 export function useEmailStore() {
-  const [currentEmail, setCurrentEmail] = useState("");
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [emails, setEmails] = useState<Email[]>([]);
+  const [currentEmail, setCurrentEmail] = useState(() => `${generateRandomString(10)}@${DOMAINS[0]}`);
+  const [emails, setEmails] = useState<Email[]>(MOCK_EMAILS);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState(() => new Date(Date.now() + 10 * 60 * 1000));
-  const channelRef = useRef<any>(null);
 
-  // Create a new session in the database
-  const createSession = useCallback(async (emailAddress: string) => {
-    const expiry = new Date(Date.now() + 10 * 60 * 1000);
-    const { data, error } = await supabase
-      .from("temp_sessions")
-      .insert({ email_address: emailAddress, expires_at: expiry.toISOString() })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Failed to create session:", error);
-      // If unique constraint, try another email
-      if (error.code === "23505") {
-        const newAddr = `${generateRandomString(10)}@${DOMAINS[Math.floor(Math.random() * DOMAINS.length)]}`;
-        return createSession(newAddr);
-      }
-      return;
-    }
-
-    setSessionId(data.id);
-    setCurrentEmail(data.email_address);
-    setExpiresAt(new Date(data.expires_at));
-    setEmails([]);
-    setSelectedEmailId(null);
-    return data.id;
-  }, []);
-
-  // Fetch emails for current session
-  const fetchEmails = useCallback(async (sid: string) => {
-    const { data, error } = await supabase
-      .from("incoming_emails")
-      .select("*")
-      .eq("session_id", sid)
-      .order("received_at", { ascending: false });
-
-    if (!error && data) {
-      setEmails(data.map(mapDbEmail));
-    }
-  }, []);
-
-  // Subscribe to real-time new emails
-  useEffect(() => {
-    if (!sessionId) return;
-
-    // Cleanup previous channel
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-    }
-
-    const channel = supabase
-      .channel(`emails-${sessionId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "incoming_emails",
-          filter: `session_id=eq.${sessionId}`,
-        },
-        (payload) => {
-          const newEmail = mapDbEmail(payload.new);
-          setEmails((prev) => [newEmail, ...prev]);
-        }
-      )
-      .subscribe();
-
-    channelRef.current = channel;
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sessionId]);
-
-  // Initialize on mount
-  useEffect(() => {
-    const init = async () => {
-      const addr = `${generateRandomString(10)}@${DOMAINS[0]}`;
-      await createSession(addr);
-    };
-    init();
-  }, [createSession]);
-
-  const generateNewEmail = useCallback(async (customPrefix?: string) => {
+  const generateNewEmail = useCallback((customPrefix?: string) => {
     const prefix = customPrefix || generateRandomString(10);
     const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)];
-    const addr = `${prefix}@${domain}`;
-    await createSession(addr);
-  }, [createSession]);
+    setCurrentEmail(`${prefix}@${domain}`);
+    setEmails(MOCK_EMAILS);
+    setSelectedEmailId(null);
+    setExpiresAt(new Date(Date.now() + 10 * 60 * 1000));
+  }, []);
 
-  const extendTime = useCallback(async () => {
-    if (!sessionId) return;
-    const newExpiry = new Date(Date.now() + 10 * 60 * 1000);
-    await supabase
-      .from("temp_sessions")
-      .update({ expires_at: newExpiry.toISOString() })
-      .eq("id", sessionId);
-    setExpiresAt(newExpiry);
-  }, [sessionId]);
+  const extendTime = useCallback(() => {
+    setExpiresAt(new Date(Date.now() + 10 * 60 * 1000));
+  }, []);
 
-  const deleteInbox = useCallback(async () => {
-    if (!sessionId) return;
-    await supabase.from("incoming_emails").delete().eq("session_id", sessionId);
+  const deleteInbox = useCallback(() => {
     setEmails([]);
     setSelectedEmailId(null);
-  }, [sessionId]);
+  }, []);
 
-  const markAsRead = useCallback(async (id: string) => {
+  const markAsRead = useCallback((id: string) => {
     setEmails((prev) => prev.map((e) => (e.id === id ? { ...e, read: true } : e)));
-    await supabase.from("incoming_emails").update({ is_read: true }).eq("id", id);
   }, []);
 
   const selectedEmail = emails.find((e) => e.id === selectedEmailId) || null;
