@@ -50,7 +50,7 @@ const Index = () => {
                 className="gap-1 border-border text-xs"
               >
                 <RefreshCw className="h-3 w-3" />
-                New Email
+                Fast OTP
               </Button>
               <Button
                 variant="outline"
