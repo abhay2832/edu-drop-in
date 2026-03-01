@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
+import DOMPurify from "dompurify";
 
 interface Email {
   id: string;
@@ -21,12 +22,15 @@ interface EmailViewerProps {
 }
 
 function sanitizeHtml(html: string, loadImages: boolean): string {
-  let clean = html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/on\w+="[^"]*"/gi, "")
-    .replace(/on\w+='[^']*'/gi, "")
-    .replace(/javascript:/gi, "");
-  
+  const allowedTags = ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'a', 'ul', 'ol', 'li', 'div', 'span', 'img', 'b', 'i', 'table', 'tr', 'td', 'th', 'thead', 'tbody'];
+  const allowedAttr = loadImages ? ['href', 'src', 'alt', 'style', 'target', 'rel'] : ['href', 'style', 'target', 'rel'];
+
+  let clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: allowedTags,
+    ALLOWED_ATTR: allowedAttr,
+    ALLOW_DATA_ATTR: false,
+  }) as string;
+
   if (!loadImages) {
     clean = clean.replace(/<img[^>]*>/gi, '<span style="color: gray;">[Image blocked]</span>');
   }
