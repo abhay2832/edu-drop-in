@@ -46,8 +46,7 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => generateNewEmail()}
-                className="gap-1 border-border text-xs"
+                className="gap-1 border-primary text-xs text-primary hover:bg-primary/10"
               >
                 <RefreshCw className="h-3 w-3" />
                 Fast OTP
